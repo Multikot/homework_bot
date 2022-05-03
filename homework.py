@@ -113,7 +113,7 @@ def main():
             current_timestamp = int(time.time())
             time.sleep(RETRY_TIME)
         else:
-            logging.error(logging_messages_box['Fatal_error_apps'])
+            logging.critical(logging_messages_box['Fatal_error_apps'])
             raise FatalErrorApps(logging_messages_box['Fatal_error_apps'])
 
 

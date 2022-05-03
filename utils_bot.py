@@ -1,21 +1,8 @@
-import logging
 import os
-from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
 
 load_dotenv()
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(
-    'my_logger.log',
-    maxBytes=50000000,
-    backupCount=5)
-logger.addHandler(handler)
 
 PRACTICUM_TOKEN = os.getenv('YANDEX_TOKEN_API')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')

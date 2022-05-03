@@ -1,6 +1,7 @@
 import logging
 import time
 from http import HTTPStatus
+from logging.handlers import RotatingFileHandler
 
 import requests
 import telegram
@@ -10,16 +11,28 @@ from utils_bot import (ENDPOINT, HEADERS, HOMEWORK_STATUSES, PRACTICUM_TOKEN,
                        ApiObjectNotFaund, FatalErrorApps, HomeworkStatusError,
                        MessageNotFound, TokenNotFound, logging_messages_box)
 
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler(
+    'my_logger.log',
+    maxBytes=50000000,
+    backupCount=5)
+logger.addHandler(handler)
+
 
 def send_message(bot, message):
     """Отправляется сообщение в телеграм.
     Принимает экземпляр класса, где указан чат id и сообщение.
     """
     try:
-        logging.info(logging_messages_box['Send_message'])
+        logger.info(logging_messages_box['Send_message'])
         bot.send_message(TELEGRAM_CHAT_ID, message)
     except MessageNotFound:
-        logging.error(logging_messages_box['Message_not_found'])
+        logger.error(logging_messages_box['Message_not_found'])
         raise MessageNotFound(logging_messages_box['Message_not_found'])
 
 
@@ -30,7 +43,7 @@ def get_api_answer(current_timestamp):
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
         if response.status_code != HTTPStatus.OK.value:
-            logging.error(logging_messages_box['Practicum_api_answer_none'])
+            logger.error(logging_messages_box['Practicum_api_answer_none'])
             raise ApiObjectNotFaund(
                 logging_messages_box['Practicum_api_answer_none'])
     except ApiObjectNotFaund(
@@ -48,13 +61,13 @@ def check_response(response):
     if len(response) == 0:
         assert False
     if not isinstance(response, dict):
-        logging.error(logging_messages_box['Type_homework_is_not_dict'])
+        logger.error(logging_messages_box['Type_homework_is_not_dict'])
         raise TypeError(logging_messages_box['Type_homework_is_not_dict'])
     if 'homeworks' not in response:
-        logging.error(logging_messages_box['Key_homeworks_not_found'])
+        logger.error(logging_messages_box['Key_homeworks_not_found'])
         raise TypeError(logging_messages_box['Type_homework_is_not_list'])
     if not isinstance(response['homeworks'], list):
-        logging.error(logging_messages_box['Type_homework_is_not_list'])
+        logger.error(logging_messages_box['Type_homework_is_not_list'])
         raise TypeError(logging_messages_box['Type_homework_is_not_list'])
     homework = response['homeworks']
     return homework
@@ -69,7 +82,7 @@ def parse_status(homework):
     try:
         verdict = HOMEWORK_STATUSES[homework_status]
     except HomeworkStatusError:
-        logging.error(logging_messages_box['Homework_status_error'])
+        logger.error(logging_messages_box['Homework_status_error'])
         raise HomeworkStatusError(
             logging_messages_box['Homework_status_error'])
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -81,11 +94,11 @@ def check_tokens():
         return True
     else:
         if PRACTICUM_TOKEN is None:
-            logging.error(logging_messages_box['Practicum_token_not_found'])
+            logger.error(logging_messages_box['Practicum_token_not_found'])
         if TELEGRAM_TOKEN is None:
-            logging.error(logging_messages_box['Telegram_token_not_found'])
+            logger.error(logging_messages_box['Telegram_token_not_found'])
         if TELEGRAM_CHAT_ID is None:
-            logging.error(logging_messages_box['Telegram_chat_id_not_found'])
+            logger.error(logging_messages_box['Telegram_chat_id_not_found'])
     return False
 
 
@@ -113,7 +126,7 @@ def main():
             current_timestamp = int(time.time())
             time.sleep(RETRY_TIME)
         else:
-            logging.critical(logging_messages_box['Fatal_error_apps'])
+            logger.critical(logging_messages_box['Fatal_error_apps'])
             raise FatalErrorApps(logging_messages_box['Fatal_error_apps'])
 
 

@@ -8,8 +8,8 @@ import telegram
 
 from utils_bot import (ENDPOINT, HEADERS, HOMEWORK_STATUSES, PRACTICUM_TOKEN,
                        RETRY_TIME, TELEGRAM_CHAT_ID, TELEGRAM_TOKEN,
-                       ApiObjectNotFaund, FatalErrorApps, HomeworkStatusError,
-                       MessageNotFound, TokenNotFound, logging_messages_box)
+                       ApiObjectNotFound, FatalErrorApps, HomeworkStatusError,
+                       MessageNotFound, TokenNotFound, messages_box)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -29,11 +29,11 @@ def send_message(bot, message):
     Принимает экземпляр класса, где указан чат id и сообщение.
     """
     try:
-        logger.info(logging_messages_box['Send_message'])
+        logger.info(messages_box['Send_message'])
         bot.send_message(TELEGRAM_CHAT_ID, message)
     except MessageNotFound:
-        logger.error(logging_messages_box['Message_not_found'])
-        raise MessageNotFound(logging_messages_box['Message_not_found'])
+        logger.error(messages_box['Message_not_found'])
+        raise MessageNotFound(messages_box['Message_not_found'])
 
 
 def get_api_answer(current_timestamp):
@@ -43,12 +43,11 @@ def get_api_answer(current_timestamp):
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
         if response.status_code != HTTPStatus.OK.value:
-            logger.error(logging_messages_box['Practicum_api_answer_none'])
-            raise ApiObjectNotFaund(
-                logging_messages_box['Practicum_api_answer_none'])
-    except ApiObjectNotFaund(
-            logging_messages_box['Practicum_api_answer_none']):
-        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+            logger.error(messages_box['Practicum_api_answer_none'])
+            raise ApiObjectNotFound(messages_box['Practicum_api_answer_none'])
+    except Exception as error:
+        logger.error((messages_box['Api_get_error'], error))
+        raise ((messages_box['Api_get_error'], error))
     return response.json()
 
 
@@ -61,14 +60,14 @@ def check_response(response):
     if len(response) == 0:
         assert False
     if not isinstance(response, dict):
-        logger.error(logging_messages_box['Type_homework_is_not_dict'])
-        raise TypeError(logging_messages_box['Type_homework_is_not_dict'])
+        logger.error(messages_box['Type_homework_is_not_dict'])
+        raise TypeError(messages_box['Type_homework_is_not_dict'])
     if 'homeworks' not in response:
-        logger.error(logging_messages_box['Key_homeworks_not_found'])
-        raise TypeError(logging_messages_box['Type_homework_is_not_list'])
+        logger.error(messages_box['Key_homeworks_not_found'])
+        raise TypeError(messages_box['Type_homework_is_not_list'])
     if not isinstance(response['homeworks'], list):
-        logger.error(logging_messages_box['Type_homework_is_not_list'])
-        raise TypeError(logging_messages_box['Type_homework_is_not_list'])
+        logger.error(messages_box['Type_homework_is_not_list'])
+        raise TypeError(messages_box['Type_homework_is_not_list'])
     homework = response['homeworks']
     return homework
 
@@ -78,13 +77,15 @@ def parse_status(homework):
     Если статус успешно получен, то формируем сообщение.
     """
     homework_name = homework['homework_name']
+    if 'status' not in homework:
+        logger.error(messages_box['Key_status_not_found'])
+        raise TypeError(messages_box['Key_status_not_found'])
     homework_status = homework['status']
     try:
         verdict = HOMEWORK_STATUSES[homework_status]
     except HomeworkStatusError:
-        logger.error(logging_messages_box['Homework_status_error'])
-        raise HomeworkStatusError(
-            logging_messages_box['Homework_status_error'])
+        logger.error(messages_box['Homework_status_error'])
+        raise HomeworkStatusError(messages_box['Homework_status_error'])
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
@@ -94,11 +95,11 @@ def check_tokens():
         return True
     else:
         if PRACTICUM_TOKEN is None:
-            logger.error(logging_messages_box['Practicum_token_not_found'])
+            logger.error(messages_box['Practicum_token_not_found'])
         if TELEGRAM_TOKEN is None:
-            logger.error(logging_messages_box['Telegram_token_not_found'])
+            logger.error(messages_box['Telegram_token_not_found'])
         if TELEGRAM_CHAT_ID is None:
-            logger.error(logging_messages_box['Telegram_chat_id_not_found'])
+            logger.error(messages_box['Telegram_chat_id_not_found'])
     return False
 
 
@@ -111,7 +112,8 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time()) - RETRY_TIME
     if not check_tokens():
-        raise TokenNotFound(logging_messages_box['Token_not_found'])
+        logger.error(messages_box['Token_not_found'])
+        raise TokenNotFound(messages_box['Token_not_found'])
     while True:
         try:
             response = get_api_answer(current_timestamp)
@@ -119,15 +121,14 @@ def main():
             message = parse_status(homework)
             send_message(bot=bot, message=message)
             current_timestamp = int(time.time())
-            time.sleep(RETRY_TIME)
-
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             current_timestamp = int(time.time())
-            time.sleep(RETRY_TIME)
         else:
-            logger.critical(logging_messages_box['Fatal_error_apps'])
-            raise FatalErrorApps(logging_messages_box['Fatal_error_apps'])
+            logger.critical(messages_box['Fatal_error_apps'])
+            raise FatalErrorApps(messages_box['Fatal_error_apps'])
+        finally:
+            time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':

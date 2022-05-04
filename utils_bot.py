@@ -17,7 +17,7 @@ HOMEWORK_STATUSES = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
-logging_messages_box = {
+messages_box = {
     'Send_message': 'Отправлено сообщение',
     'Practicum_token_not_found': 'Не найден токен Практикума',
     'Telegram_token_not_found': 'Не найден токен Телеграм-бота',
@@ -25,15 +25,17 @@ logging_messages_box = {
     'Practicum_api_answer_none': 'Ответ API отличный от 200',
     'Type_homework_is_not_list': 'Тип запроса не является списком',
     'Key_homeworks_not_found': 'Не найден ключ homeworks',
+    'Key_status_not_found': 'Не найден ключ status',
     'Type_homework_is_not_dict': 'Тип запроса не является словарем',
     'Homework_status_error': 'Статус домашней работы не получен',
     'Message_not_found': 'Не найдено сообщение для отправки',
     'Token_not_found': 'Один или несколько токенов не найдено',
-    'Fatal_error_apps': 'Сбой в работе приложения'
+    'Fatal_error_apps': 'Сбой в работе приложения',
+    'Api_get_error': 'Ошибка получения Api'
 }
 
 
-class ApiObjectNotFaund(Exception):
+class ApiObjectNotFound(Exception):
     pass
 
 

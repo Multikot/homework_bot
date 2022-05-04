@@ -125,9 +125,9 @@ def main():
             message = f'Сбой в работе программы: {error}'
             current_timestamp = int(time.time())
             logger.error(message)
-            send_message(bot=bot, message=message)
         else:
             logger.critical(messages_box['Fatal_error_apps'])
+            send_message(bot=bot, message=messages_box['Fatal_error_apps'])
             raise FatalErrorApps(messages_box['Fatal_error_apps'])
         finally:
             time.sleep(RETRY_TIME)

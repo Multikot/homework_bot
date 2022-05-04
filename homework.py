@@ -115,7 +115,7 @@ def main():
     while True:
         try:
             response = get_api_answer(current_timestamp)
-            homework = check_response(response)
+            homework = check_response(response)[0]
             message = parse_status(homework)
             send_message(bot=bot, message=message)
             current_timestamp = int(time.time())

@@ -1,27 +1,12 @@
-import logging
 import time
 from http import HTTPStatus
-from logging.handlers import RotatingFileHandler
 
 import requests
-import telegram
 
 from utils_bot import (ENDPOINT, HEADERS, HOMEWORK_STATUSES, PRACTICUM_TOKEN,
-                       RETRY_TIME, TELEGRAM_CHAT_ID, TELEGRAM_TOKEN,
-                       ApiObjectNotFound, FatalErrorApps, HomeworkStatusError,
-                       MessageNotFound, TokenNotFound, messages_box)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(
-    'my_logger.log',
-    maxBytes=50000000,
-    backupCount=5)
-
-logger.addHandler(handler)
-formatter = logging.Formatter(
-    '%(asctime)s -  %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
+                       TELEGRAM_CHAT_ID, TELEGRAM_TOKEN, ApiObjectNotFound,
+                       HomeworkStatusError, MessageNotFound, logger,
+                       messages_box)
 
 
 def send_message(bot, message):
@@ -57,8 +42,7 @@ def check_response(response):
     что ключ homeworks есть в словаре и что по запросу через ключ
     возвращается список.
     """
-    if len(response) == 0:
-        assert False
+    assert len(response) != 0, False
     if not isinstance(response, dict):
         logger.error(messages_box['Type_homework_is_not_dict'])
         raise TypeError(messages_box['Type_homework_is_not_dict'])
@@ -81,12 +65,17 @@ def parse_status(homework):
         logger.error(messages_box['Key_status_not_found'])
         raise TypeError(messages_box['Key_status_not_found'])
     homework_status = homework['status']
+    if 'reviewer_comment' not in homework:
+        logger.error(messages_box['Key_reviewer_comment_not_found'])
+        raise TypeError(messages_box['Key_reviewer_comment_not_found'])
+    reviewer_comment = homework['reviewer_comment']
     try:
         verdict = HOMEWORK_STATUSES[homework_status]
     except HomeworkStatusError:
         logger.error(messages_box['Homework_status_error'])
         raise HomeworkStatusError(messages_box['Homework_status_error'])
-    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+    return (f'Изменился статус проверки работы "{homework_name}". {verdict}',
+            f'c комментарием: {reviewer_comment}')
 
 
 def check_tokens():
@@ -101,37 +90,3 @@ def check_tokens():
         if TELEGRAM_CHAT_ID is None:
             logger.error(messages_box['Telegram_chat_id_not_found'])
     return False
-
-
-def main():
-    """Основная логика работы бота.
-    Если токены не прошли проверку, сообщаем об этом.
-    Получаем запрос, проверяем ответ на коррекность
-    Получаем элемент домашнего задания и статус, отправляем сообщение.
-    """
-    bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time()) - RETRY_TIME
-    if not check_tokens():
-        logger.error(messages_box['Token_not_found'])
-        raise TokenNotFound(messages_box['Token_not_found'])
-    while True:
-        try:
-            response = get_api_answer(current_timestamp)
-            homework = check_response(response)[0]
-            message = parse_status(homework)
-            send_message(bot=bot, message=message)
-            current_timestamp = int(time.time())
-        except Exception as error:
-            message = f'Сбой в работе программы: {error}'
-            current_timestamp = int(time.time())
-            logger.error(message)
-        else:
-            logger.critical(messages_box['Fatal_error_apps'])
-            send_message(bot=bot, message=messages_box['Fatal_error_apps'])
-            raise FatalErrorApps(messages_box['Fatal_error_apps'])
-        finally:
-            time.sleep(RETRY_TIME)
-
-
-if __name__ == '__main__':
-    main()

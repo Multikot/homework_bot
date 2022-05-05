@@ -1,4 +1,6 @@
+import logging
 import os
+from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
 
@@ -17,6 +19,18 @@ HOMEWORK_STATUSES = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler(
+    'my_logger.log',
+    maxBytes=50000000,
+    backupCount=5)
+
+logger.addHandler(handler)
+formatter = logging.Formatter(
+    '%(asctime)s -  %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
 messages_box = {
     'Send_message': 'Отправлено сообщение',
     'Practicum_token_not_found': 'Не найден токен Практикума',
@@ -26,6 +40,7 @@ messages_box = {
     'Type_homework_is_not_list': 'Тип запроса не является списком',
     'Key_homeworks_not_found': 'Не найден ключ homeworks',
     'Key_status_not_found': 'Не найден ключ status',
+    'Key_reviewer_comment_not_found': 'не найден ключ reviewer comment',
     'Type_homework_is_not_dict': 'Тип запроса не является словарем',
     'Homework_status_error': 'Статус домашней работы не получен',
     'Message_not_found': 'Не найдено сообщение для отправки',

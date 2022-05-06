@@ -2,6 +2,7 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
+import telegram
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,7 +13,7 @@ TELEGRAM_CHAT_ID = os.getenv('MY_CHAT_ID')
 RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
-
+BOT = telegram.Bot(token=TELEGRAM_TOKEN)
 HOMEWORK_STATUSES = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
@@ -46,7 +47,8 @@ messages_box = {
     'Message_not_found': 'Не найдено сообщение для отправки',
     'Token_not_found': 'Один или несколько токенов не найдено',
     'Fatal_error_apps': 'Сбой в работе приложения',
-    'Api_get_error': 'Ошибка получения Api'
+    'Api_get_error': 'Ошибка получения Api',
+    'New_status_is_none': 'Нет нового статуса'
 }
 
 

@@ -1,4 +1,3 @@
-import time
 from http import HTTPStatus
 
 import requests
@@ -23,8 +22,7 @@ def send_message(bot, message):
 
 def get_api_answer(current_timestamp):
     """Проверяем запрос к Api, статус код запроса должен быть равен 200."""
-    timestamp = current_timestamp or int(time.time())
-    params = {'from_date': timestamp}
+    params = {'from_date': current_timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
         if response.status_code != HTTPStatus.OK.value:
@@ -65,17 +63,12 @@ def parse_status(homework):
         logger.error(messages_box['Key_status_not_found'])
         raise TypeError(messages_box['Key_status_not_found'])
     homework_status = homework['status']
-    if 'reviewer_comment' not in homework:
-        logger.error(messages_box['Key_reviewer_comment_not_found'])
-        raise TypeError(messages_box['Key_reviewer_comment_not_found'])
-    reviewer_comment = homework['reviewer_comment']
     try:
         verdict = HOMEWORK_STATUSES[homework_status]
     except HomeworkStatusError:
         logger.error(messages_box['Homework_status_error'])
         raise HomeworkStatusError(messages_box['Homework_status_error'])
-    return (f'Изменился статус проверки работы "{homework_name}". {verdict}',
-            f'c комментарием: {reviewer_comment}')
+    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_tokens():
